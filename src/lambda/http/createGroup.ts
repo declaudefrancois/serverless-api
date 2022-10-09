@@ -7,7 +7,6 @@ const docClient = new AWS.DynamoDB.DocumentClient();
 const groupsTable = process.env.GROUPS_TABLE;
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  // debug purpose
   console.log("Processing event ", event);
   
   const { name, description } = JSON.parse(event.body);
