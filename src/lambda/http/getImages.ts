@@ -17,7 +17,6 @@ export const handler: APIGatewayProxyHandler = async (
   console.log("Caller event ", event);
 
   const { groupId } = event.pathParameters;
-
   const validGroupId = await groupExists(groupId)
 
   if (!validGroupId) {
@@ -33,7 +32,6 @@ export const handler: APIGatewayProxyHandler = async (
   }
 
   const images = await getImagesPerGroup(groupId)
-
   return {
     statusCode: 200,
     headers: {
