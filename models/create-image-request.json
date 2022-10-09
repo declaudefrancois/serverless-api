@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "image",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "imageUrl": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "imageUrl"
+  ],
+  "additionalProperties": false
+}
