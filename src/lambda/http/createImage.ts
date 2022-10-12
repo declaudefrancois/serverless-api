@@ -10,6 +10,12 @@ const docClient = new AWS.DynamoDB.DocumentClient();
 
 const imagesTable = process.env.IMAGES_TABLE;
 const groupsTable = process.env.GROUPS_TABLE;
+const bucketName = process.env.IMAGES_S3_BUCKET;
+const urlExpiration = process.env.SIGNED_URL_EXPIRATION;
+
+const s3 = new AWS.S3({
+  signatureVersion: 'v4',
+});
 
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent
@@ -17,7 +23,7 @@ export const handler: APIGatewayProxyHandler = async (
   console.log("Caller event ", event);
 
   const { groupId } = event.pathParameters;
-  const { title, imageUrl } = JSON.parse(event.body);
+  const { title } = JSON.parse(event.body);
 
   if (!(await groupExists(groupId))) {
     return {
@@ -35,12 +41,14 @@ export const handler: APIGatewayProxyHandler = async (
   const imageId = uuidv4();
 
   const newImage = {
-    imageId,
     groupId,
-    title,
-    imageUrl,
     timestamp,
+    imageId,
+    title,
+    imageUrl: `https://${bucketName}.s3.amazonaws.com/${imageId}`
   };
+
+  const signedUrl = getUploadUrl(imageId);
 
   await docClient
     .put({
@@ -57,12 +65,21 @@ export const handler: APIGatewayProxyHandler = async (
     body: JSON.stringify(
       {
         item: newImage,
+        uploadUrl: signedUrl
       },
       null,
       2
     ),
   };
 };
+
+function getUploadUrl(imageId: string) {
+  return s3.getSignedUrl('putObject', {
+    Bucket: bucketName,
+    Key: imageId,
+    Expires: parseInt(urlExpiration),
+  })
+}
 
 async function groupExists(groupId: string) {
   const result = await docClient
