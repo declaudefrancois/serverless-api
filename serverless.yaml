@@ -16,6 +16,7 @@ provider:
     GROUPS_TABLE: Groups-${self:provider.stage}
     IMAGES_TABLE: Images-${self:provider.stage}
     IMAGES_ID_INDEX: ImagesIdIndex
+    CONNECTIONS_TABLE: Connections-${self:provider.stage}
     IMAGES_S3_BUCKET: serverless-udagram-images-${self:provider.stage}-926390632358
     SIGNED_URL_EXPIRATION: 300
 
@@ -43,6 +44,12 @@ provider:
         - s3:PutObject
         - s3:GetObject
       Resource: arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*
+    - Effect: Allow
+      Action:
+        - dynamodb:Scan
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+      Resource: arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.CONNECTIONS_TABLE}
 
 custom:
   webpack:
@@ -115,7 +122,30 @@ functions:
           cors: true
 
   SendUploadNotifications:
+    environment:
+      STAGE: ${self:provider.stage}
+      API_ID: !Ref NotificationWebSocketApi
+      # API_ENDPOINT:
+      # Fn::Join:
+      #   - ""
+      #   - - Ref: WebsocketsApi
+      #     - .execute-api.
+      #     - Ref: AWS::Region
+      #     - .amazonaws.com/
+      #     - ${self:provider.stage}
     handler: src/lambda/s3/sendNotifications.handler
+
+  ConnectHandler:
+    handler: src/lambda/websocket/connect.handler
+    events:
+      - websocket:
+        route: $connect
+  
+  DisconnectHandler:
+    handler: src/lambda/websocket/disconnect.handler
+    events:
+      - websocket:
+        route: $disconnect
 
 resources:
   Resources:
@@ -164,6 +194,27 @@ resources:
               ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.IMAGES_TABLE}
+	
+    NotificationWebSocketApi:
+      Type: AWS::ApiGatewayV2::Api
+      Properties:
+        Name: NotificationWebSocketApi
+        ProtocolType: WEBSOCKET
+        RouteSelectionExpression: '$request.body.action'
+
+    WebSocketConnectionsDynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.CONNECTIONS_TABLE}
 
     AttachmentsBucket:
       Type: AWS::S3::Bucket
