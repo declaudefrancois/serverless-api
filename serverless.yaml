@@ -17,8 +17,9 @@ provider:
     IMAGES_TABLE: Images-${self:provider.stage}
     IMAGES_ID_INDEX: ImagesIdIndex
     CONNECTIONS_TABLE: Connections-${self:provider.stage}
-    IMAGES_S3_BUCKET: serverless-udagram-images-${self:provider.stage}-926390632358
+    IMAGES_S3_BUCKET: serverless-udagram-images-${self:provider.stage}-92639063235812
     SIGNED_URL_EXPIRATION: 300
+    THUMBNAILS_S3_BUCKET: serverless-udagram-thumbnail-${self:provider.stage}-926390632358
 
   iamRoleStatements:
     - Effect: Allow
@@ -44,12 +45,18 @@ provider:
         - s3:PutObject
         - s3:GetObject
       Resource: arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*
+
     - Effect: Allow
       Action:
         - dynamodb:Scan
         - dynamodb:PutItem
         - dynamodb:DeleteItem
       Resource: arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.CONNECTIONS_TABLE}
+    
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+      Resource: "arn:aws:s3:::${self:provider.environment.THUMBNAILS_S3_BUCKET}/*"
 
 custom:
   topicName: imagesTopic-${self:provider.stage}
@@ -126,10 +133,10 @@ functions:
     environment:
       STAGE: ${self:provider.stage}
       API_ID: !Ref NotificationWebSocketApi
-      # API_ENDPOINT:
+      API_ENDPOINT: jwrtc9s8ti.execute-api.amazonaws.com/${self:provider.stage}
       # Fn::Join:
       #   - ""
-      #   - - Ref: WebsocketsApi
+      #   - - Ref: NotificationWebSocketApi.Properties.ApiId
       #     - .execute-api.
       #     - Ref: AWS::Region
       #     - .amazonaws.com/

@@ -7,6 +7,7 @@ const docClient = new AWS.DynamoDB.DocumentClient();
 const connectionsTable = process.env.CONNECTIONS_TABLE;
 const stage = process.env.STAGE;
 const apiId = process.env.API_ID;
+const apiEndpoint = process.env.API_ENDPOINT;
 
 const connectionParams = {
   apiVersion: "2018-11-29",
@@ -16,6 +17,8 @@ const connectionParams = {
 const apiGateway = new AWS.ApiGatewayManagementApi(connectionParams);
 
 export const handler: SNSHandler = async (event: SNSEvent) => {
+  console.log("Api Endpoint :", apiEndpoint);
+  console.log("ApiId :", apiId);
   console.log("Processing SNS event", JSON.stringify(event));
 
   for (const snsRecord of event.Records) {

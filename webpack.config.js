@@ -2,11 +2,12 @@ const path = require("path");
 const slsw = require("serverless-webpack");
 const nodeExternals = require("webpack-node-externals");
 const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
+const webpack = require("webpack");
 
 const entries = {};
 
 Object.keys(slsw.lib.entries).forEach(
-  key => (entries[key] = ['./source-map-install.js', slsw.lib.entries[key]])
+  (key) => (entries[key] = ["./source-map-install.js", slsw.lib.entries[key]])
 );
 
 module.exports = {
@@ -49,6 +50,9 @@ module.exports = {
     ],
   },
   plugins: [
+    // new webpack.DefinePlugin({
+    //   "process.browser": "true",
+    // }),
     // "source-map-support",
     // new ForkTsCheckerWebpackPlugin({
     //   eslint: true,
