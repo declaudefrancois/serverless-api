@@ -20,6 +20,7 @@ provider:
     IMAGES_S3_BUCKET: serverless-udagram-images-${self:provider.stage}-92639063235812
     SIGNED_URL_EXPIRATION: 300
     THUMBNAILS_S3_BUCKET: serverless-udagram-thumbnail-${self:provider.stage}-926390632358
+    AUTH_0_SECRET: zHMOnIoOddtTj9-ffWCFwWvxJMp6aqeDMJ8qLfoYaDX3QXJCLtO55d3gqrUkhMbi
 
   iamRoleStatements:
     - Effect: Allow
