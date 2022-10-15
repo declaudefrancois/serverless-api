@@ -1,13 +1,21 @@
-import { CustomAuthorizerResult, APIGatewayAuthorizerHandler, APIGatewayTokenAuthorizerEvent } from "aws-lambda";
+import { CustomAuthorizerResult, APIGatewayTokenAuthorizerEvent } from "aws-lambda";
 import { verify } from 'jsonwebtoken';
 import { JwtToken } from "../../auth/JwtToken";
+import * as middy from 'middy';
+import { secretsManager } from 'middy/middlewares';
 
-const auth0Secret = process.env.AUTH_0_SECRET;
+const secretId = process.env.AUTH_0_SECRET_ID
+const secretField = process.env.AUTH_0_SECRET_FIELD
 
-export const handler: APIGatewayAuthorizerHandler = async (event: APIGatewayTokenAuthorizerEvent): Promise<CustomAuthorizerResult> => {
+
+export const handler = middy(async (event: APIGatewayTokenAuthorizerEvent, context): Promise<CustomAuthorizerResult> => {
   try {
-    const decodedToken = verifyToken(event.authorizationToken);
-    console.log("User was authorized");
+    const decodedToken = verifyToken(
+      event.authorizationToken, 
+      context.AUTH0_SECRET[secretField]
+    );
+
+    console.log("User was authorized", decodedToken);
 
     return {
       principalId: decodedToken.sub,
@@ -40,9 +48,9 @@ export const handler: APIGatewayAuthorizerHandler = async (event: APIGatewayToke
       }
     }
   }  
-}
+})
 
-function verifyToken(authHeader:string): JwtToken{
+function verifyToken(authHeader:string, secret: string): JwtToken{
   if (!authHeader) {
     throw new Error("No authorization header");
   }
@@ -53,6 +61,18 @@ function verifyToken(authHeader:string): JwtToken{
 
   const token = authHeader.split(' ')[1];
 
-  // Mock test.
-  return verify(token, auth0Secret);
+  return verify(token, secret);
 }
+
+handler.use(
+  secretsManager({
+    awsSdkOptions: { region: 'us-east-1' },
+    cache: true,
+    cacheExpiryInMillis: 60000,
+    // Throw an error if can't read the secret
+    throwOnFailedCall: true,
+    secrets: {
+      AUTH0_SECRET: secretId
+    }
+  })
+);
