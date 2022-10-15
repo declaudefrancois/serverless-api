@@ -61,7 +61,7 @@ function verifyToken(authHeader:string, secret: string): JwtToken{
 
   const token = authHeader.split(' ')[1];
 
-  return verify(token, secret);
+  return verify(token, secret) as JwtToken;
 }
 
 handler.use(
